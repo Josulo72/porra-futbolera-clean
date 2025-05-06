@@ -100,7 +100,7 @@ try:
                     f"<span style='font-size:2em; color:green;'>{score}</span>",
                     unsafe_allow_html=True
                 )
-            st.write("---") (o placeholder)
+            st.write("---")
             score = resultados.get(team_key, "--")
             # Mostrar
             st.markdown(
