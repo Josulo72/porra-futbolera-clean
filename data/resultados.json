@@ -1,8 +1,8 @@
 {
     "partidos": {
         "Real Madrid": "futbol-club-barcelona vs real-madrid-club-de-futbol",
-        "Barcelona": "club-atletico-de-madrid vs real-sociedad-de-futbol",
-        "Ponferradina": "sociedad-deportiva-ponferradina vs sociedad-deportiva-ponferradina"
+        "Barcelona": "real-sociedad-de-futbol vs club-atletico-de-madrid",
+        "Ponferradina": "real-sociedad-de-futbol-ii vs sociedad-deportiva-ponferradina"
     },
     "horarios": {
         "Real Madrid": {
