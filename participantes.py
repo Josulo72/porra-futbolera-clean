@@ -3,13 +3,6 @@ import pandas as pd
 import json
 import os
 
-# DEBUG: Comprueba directorio de trabajo y contenido de logos/
-st.write("🏷️ Directorio de trabajo:", os.getcwd())
-try:
-    st.write("📂 Contenido de logos/:", os.listdir("logos"))
-except Exception as e:
-    st.write("⚠️ Error accediendo a logos/:", e)
-
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
 
@@ -90,15 +83,13 @@ try:
             # Extraer los slugs
             if "vs" in partido_str:
                 local_slug, visit_slug = [s.strip() for s in partido_str.split("vs")]
-                local_name  = slug_to_name(local_slug)
-                visit_name  = slug_to_name(visit_slug)
+                # Obtener nombre y logo desde custom_teams
+                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
+                visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
             else:
-                local_name  = slug_to_name(partido_str)
-                visit_name  = None
-
-            # Rutas de logos basadas en nombre limpio
-            local_logo = display_to_logo.get(local_name)
-            visit_logo = display_to_logo.get(visit_name) if visit_name else None
+                local_slug = partido_str.strip()
+                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
+                visit_name = visit_logo = None
 
             # Texto a mostrar
             display = f"{local_name} vs {visit_name}" if visit_name else local_name
