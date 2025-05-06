@@ -67,13 +67,17 @@ try:
     st.subheader("📋 Partidos de la jornada")
     if resultados:
         for slug, marcador in resultados.items():
-            # obtener nombre y logo
-            nombre, logo_path = custom_teams.get(slug, (slug.replace('-', ' ').title(), None))
-            if logo_path and os.path.exists(logo_path):
-                st.image(logo_path, width=30, caption=nombre)
-            else:
-                st.write(f"⚽ **{nombre}**")
-            st.markdown(
+    # DEBUG: comprobación de ruta de logo
+    nombre, logo_path = custom_teams.get(slug, (slug.replace('-', ' ').title(), None))
+    exists = logo_path and os.path.exists(logo_path)
+    st.write(f"DEBUG: {slug!r} → ruta: {logo_path!r}, existe? {exists}")
+    # Renderizar logo o nombre
+    if exists:
+        st.image(logo_path, width=30, caption=nombre)
+    else:
+        st.write(f"⚽ **{nombre}**  _(sin logo)_")
+    # Mostrar marcador
+    st.markdown(
                 f"<span style='font-size:2em; color:green;'>{marcador}</span>",
                 unsafe_allow_html=True
             )
