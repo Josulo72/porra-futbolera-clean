@@ -3,6 +3,13 @@ import pandas as pd
 import json
 import os
 
+# DEBUG: Comprueba directorio de trabajo y contenido de logos/
+st.write("🏷️ Directorio de trabajo:", os.getcwd())
+try:
+    st.write("📂 Contenido de logos/:", os.listdir("logos"))
+except Exception as e:
+    st.write("⚠️ Error accediendo a logos/:", e)
+
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
 
