@@ -76,13 +76,31 @@ try:
             # Partido_str: "slug_local vs slug_visit"
             if 'vs' in partido_str:
                 local_slug, visit_slug = [s.strip() for s in partido_str.split('vs')]
-                local_name = custom_teams.get(local_slug, (slug_to_name(local_slug), None))[0]
-                visit_name = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))[0]
+                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
+                visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
                 display = f"{local_name} vs {visit_name}"
             else:
                 # Fallback si no contiene 'vs'
                 display = slug_to_name(partido_str)
+                local_logo = visit_logo = None
             # Marcador (o placeholder)
+            score = resultados.get(team_key, "--")
+            # Mostrar con escudos si existen
+            cols = st.columns([1, 5])
+            # Columna de logos
+            with cols[0]:
+                if local_logo and os.path.exists(local_logo):
+                    st.image(local_logo, width=30)
+                if visit_logo and os.path.exists(visit_logo):
+                    st.image(visit_logo, width=30)
+            # Columna de texto y marcador
+            with cols[1]:
+                st.markdown(
+                    f"**⚽ {display}** → "
+                    f"<span style='font-size:2em; color:green;'>{score}</span>",
+                    unsafe_allow_html=True
+                )
+            st.write("---") (o placeholder)
             score = resultados.get(team_key, "--")
             # Mostrar
             st.markdown(
