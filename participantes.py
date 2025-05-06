@@ -3,18 +3,20 @@ import pandas as pd
 import json
 import os
 
-# Configuración de página
+# Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
 
-# Ocultar elementos por defecto
-hide = """
-<style>
-  #MainMenu, footer, header {visibility: hidden;}
-</style>
-"""
-st.markdown(hide, unsafe_allow_html=True)
+# Ocultar menú, footer y header de Streamlit
+st.markdown(
+    """
+    <style>
+        #MainMenu, footer, header {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Mapeo de slugs a (nombre limpio, ruta logo)
+# Diccionario de slugs a (nombre legible, ruta del logo)
 custom_teams = {
     "futbol-club-barcelona":       ("Barcelona",      "logos/barcelona.png"),
     "real-madrid-club-de-futbol":  ("Real Madrid",    "logos/real_madrid.png"),
@@ -59,41 +61,49 @@ custom_teams = {
     "sd-amorebieta":               ("SD Amorebieta",  "logos/amorebieta.png")
 }
 
-# Función auxiliar para formatear slugs perdidos
+# Mapeo inverso: nombre legible → ruta de logo
+display_to_logo = {
+    display: logo for _, (display, logo) in custom_teams.items()
+}
+
+# Convierte un slug genérico en nombre legible
 def slug_to_name(slug: str) -> str:
     return slug.replace('-', ' ').title()
 
-# Carga de datos
+# Carga de datos y renderizado
 try:
     with open("data/resultados.json", "r", encoding="utf-8") as f:
         datos = json.load(f)
-    partidos = datos.get("partidos", {})      # Dict: nombre_equipo -> "slug1 vs slug2"
-    resultados = datos.get("resultados", {})  # Dict: nombre_equipo -> marcador
+    partidos   = datos.get("partidos", {})     # e.g. {"Key1": "slugA vs slugB", ...}
+    resultados = datos.get("resultados", {})   # e.g. {"Key1": "2-1", ...}
 
     st.subheader("📋 Partidos de la jornada")
     if partidos:
         for team_key, partido_str in partidos.items():
-            # Partido_str: "slug_local vs slug_visit"
-            if 'vs' in partido_str:
-                local_slug, visit_slug = [s.strip() for s in partido_str.split('vs')]
-                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
-                visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
-                display = f"{local_name} vs {visit_name}"
+            # Extraer los slugs
+            if "vs" in partido_str:
+                local_slug, visit_slug = [s.strip() for s in partido_str.split("vs")]
+                local_name  = slug_to_name(local_slug)
+                visit_name  = slug_to_name(visit_slug)
             else:
-                # Fallback si no contiene 'vs'
-                display = slug_to_name(partido_str)
-                local_logo = visit_logo = None
-            # Marcador (o placeholder)
-            score = resultados.get(team_key, "--")
-            # Mostrar con escudos si existen
-            cols = st.columns([1, 5])
-            # Columna de logos
+                local_name  = slug_to_name(partido_str)
+                visit_name  = None
+
+            # Rutas de logos basadas en nombre limpio
+            local_logo = display_to_logo.get(local_name)
+            visit_logo = display_to_logo.get(visit_name) if visit_name else None
+
+            # Texto a mostrar
+            display = f"{local_name} vs {visit_name}" if visit_name else local_name
+            score   = resultados.get(team_key, "--")
+
+            # Layout con dos columnas: escudos + texto/marcador
+            cols = st.columns([1, 6])
             with cols[0]:
                 if local_logo and os.path.exists(local_logo):
                     st.image(local_logo, width=30)
                 if visit_logo and os.path.exists(visit_logo):
                     st.image(visit_logo, width=30)
-            # Columna de texto y marcador
             with cols[1]:
                 st.markdown(
                     f"**⚽ {display}** → "
@@ -101,17 +111,10 @@ try:
                     unsafe_allow_html=True
                 )
             st.write("---")
-            score = resultados.get(team_key, "--")
-            # Mostrar
-            st.markdown(
-                f"**⚽ {display}** → "
-                f"<span style='font-size:2em; color:green;'>{score}</span>",
-                unsafe_allow_html=True
-            )
     else:
         st.info("No hay partidos programados.")
 
-    # Supervivientes
+    # Participantes vivos
     if os.path.exists("data/supervivientes.csv"):
         df = pd.read_csv("data/supervivientes.csv")
         st.subheader("🟢 Participantes que siguen vivos")
