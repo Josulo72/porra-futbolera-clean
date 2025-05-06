@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import json
 import os
-import control_porralocal
-import auto_resultados
 
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
 hide_streamlit_style = """
@@ -18,7 +16,6 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Diccionario de nombres y rutas de escudos personalizados
-# Asegúrate de que las claves coincidan con los slugs de tu JSON de partidos
 custom_teams = {
     # Primera División
     "futbol-club-barcelona": ("Barcelona", "logos/barcelona.png"),
@@ -64,26 +61,22 @@ custom_teams = {
     "sd-amorebieta": ("SD Amorebieta", "logos/amorebieta.png")
 }
 
-# Leer resultados y supervivientes
 try:
     with open("data/resultados.json", "r") as f:
         datos = json.load(f)
-    partidos = datos["partidos"]  # debe incluir entradas para los tres partidos
+    partidos = datos["partidos"]
     resultados = datos["resultados"]
 
     st.subheader("📋 Partidos de la jornada")
-    # Recorremos todos los partidos, filtramos por custom_teams
     for key, slug in partidos.items():
         if slug not in custom_teams:
             continue
         display_name, logo_path = custom_teams[slug]
         marcador = resultados.get(key, "")
-        # Mostrar escudo y nombre
         if os.path.exists(logo_path):
             st.image(logo_path, width=30, caption=display_name)
         else:
             st.write(f"⚽ **{display_name}**")
-        # Mostrar resultado en verde, tamaño duplicado
         st.markdown(
             f"<span style='font-size:2em; color:green;'>{marcador}</span>",
             unsafe_allow_html=True
