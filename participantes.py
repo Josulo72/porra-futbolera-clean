@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import control_porralocal
+import auto_resultados
 
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
 hide_streamlit_style = """
