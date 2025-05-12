@@ -10,10 +10,10 @@ import time
 
 # Parámetros generales
 timeout = 5      # segundos de espera por petición
-retries = 3      # reintentos en caso de fallo
-data_file = 'resultados.json'
-predictions_xlsx = 'predicciones.xlsx'
-survivors_csv = 'supervivientes.csv'
+retries = 3      # número de reintentos en caso de fallo
+data_file     = 'data/resultados.json'
+predictions_xlsx = 'data/predicciones.xlsx'
+survivors_csv    = 'data/supervivientes.csv'
 
 # Encabezados HTTP genéricos para scraping
 headers_scrap = {
@@ -23,60 +23,40 @@ headers_scrap = {
     )
 }
 
-# Lista de partidos y URLs exactas
-# Rellena aquí con la URL absoluta de cada enfrentamiento en Soccerway
-partidos = [
-    {
-        'name': 'Real Madrid',
-        'url_override': 'https://int.soccerway.com/matches/2025/05/11/spain/primera/futbol-club-barcelona/real-madrid-club-de-futbol/4367683/'
-    },
-    {
-        'name': 'Barcelona',
-        'url_override': 'https://int.soccerway.com/matches/2025/05/10/spain/primera/club-atletico-de-madrid/real-sociedad-de-futbol/4367682/'
-    },
-    {
-        'name': 'Ponferradina',
-        'url_override': 'https://int.soccerway.com/matches/2025/05/11/spain/segunda-b/real-sociedad-de-futbol-ii/sociedad-deportiva-ponferradina/4453956/'
-    }
-]
 
-
-def obtener_resultado(url):
+def obtener_resultado(url_override, name_equipo):
     """
-    Realiza scraping en la URL completa proporcionada
-y devuelve una tupla (goles_local, goles_visitante).
+    Realiza scraping directo usando la URL absoluta en url_override
+    y devuelve una tupla (goles_local, goles_visitante), o None si falla.
     """
+    url = url_override  # usamos la URL completa que proporcionas
     for intento in range(1, retries + 1):
         try:
             resp = requests.get(url, headers=headers_scrap, timeout=timeout)
             resp.raise_for_status()
             soup = BeautifulSoup(resp.text, 'html.parser')
-
-            # 1) Intento con selectores específicos
+            # Intento con selectores específicos
             span_home = soup.select_one('div.score span.home')
             span_away = soup.select_one('div.score span.away')
             if span_home and span_away:
                 return int(span_home.text.strip()), int(span_away.text.strip())
-
-            # 2) Fallback con regex sobre el texto completo
-            text = soup.get_text()
-            m = re.search(r"(\d+)[-–](\d+)", text)
+            # Fallback con regex en el texto completo
+            texto = soup.get_text()
+            m = re.search(r"(\d+)[-–](\d+)", texto)
             if m:
                 return int(m.group(1)), int(m.group(2))
-
-            raise ValueError('Marcador no encontrado en la página')
-
+            # Si llegamos aquí, no encontramos marcador
+            raise ValueError("Marcador no localizado en la página")
         except Exception as e:
-            print(f"[WARN] Intento {intento}/{retries} FALLIDO para {url}: {e}")
+            print(f"[WARN] {name_equipo} intento {intento}/{retries} FALLIDO en {url}: {e}")
             time.sleep(1)
-
-    print(f"[ERROR] No se pudo obtener resultado de {url}")
+    print(f"[ERROR] No se pudo obtener resultado de {name_equipo} en {url}")
     return None
 
 
 def convert_to_1X2(local, visitante):
     """
-    Convierte un resultado de goles en 1/X/2.
+    Convierte un marcador de goles en 1/X/2.
     """
     if local > visitante:
         return '1'
@@ -86,57 +66,62 @@ def convert_to_1X2(local, visitante):
 
 
 def main():
-    # Carga de resultados previos o creación de estructura
+    # Cargar JSON de configuración y overrides
     if os.path.exists(data_file):
         with open(data_file, 'r', encoding='utf-8') as f:
-            resultados = json.load(f)
+            datos = json.load(f)
     else:
-        resultados = {}
+        print(f"[ERROR] No existe '{data_file}'. Ejecuta primero la interfaz de control.")
+        return
 
     cambios = False
+    resultados = datos.get('resultados', {})
+    overrides  = datos.get('overrides', {})
 
-    # Procesar cada partido
-    for p in partidos:
-        name = p['name']
-        url = p['url_override']
-        res = obtener_resultado(url)
+    # Iterar cada partido según claves en overrides
+    for name, url in overrides.items():
+        if not url:
+            print(f"[WARN] No hay URL override para '{name}', se omite.")
+            continue
+        res = obtener_resultado(url, name)
         if not res:
             continue
         local, visit = res
-        # Uso de 1X2 para Ponferradina, goles para el resto
         if name.lower() == 'ponferradina':
             valor = convert_to_1X2(local, visit)
         else:
             valor = f"{local}-{visit}"
-
         if resultados.get(name) != valor:
             resultados[name] = valor
+            datos['resultados'][name] = valor
             cambios = True
             print(f"[UPDATE] {name}: {valor}")
 
-    # Si hay cambios, volcar JSON, recalcular Excel y git push
+    # Si hubo cambios, actualizar JSON, CSV de supervivientes y versionar en Git
     if cambios:
+        # Guardar JSON actualizado
+        os.makedirs(os.path.dirname(data_file), exist_ok=True)
         with open(data_file, 'w', encoding='utf-8') as f:
-            json.dump(resultados, f, indent=2, ensure_ascii=False)
-        print("[OK] resultados.json actualizado.")
+            json.dump(datos, f, indent=2, ensure_ascii=False)
+        print("[OK] data/resultados.json actualizado.")
 
-        # Recalcular supervivientes si existe predicciones.xlsx
+        # Recalcular supervivientes desde predicciones.xlsx
         if os.path.exists(predictions_xlsx):
             df = pd.read_excel(predictions_xlsx)
-            df_surv = df
-            for name, val in resultados.items():
+            df_surv = df.copy()
+            for name, val in datos['resultados'].items():
                 df_surv = df_surv[df_surv[name] == val]
+            os.makedirs(os.path.dirname(survivors_csv), exist_ok=True)
             df_surv.to_csv(survivors_csv, index=False, encoding='utf-8')
-            print("[OK] supervivientes.csv generado.")
+            print("[OK] data/supervivientes.csv generado.")
 
-        # Versionado en Git
-        subprocess.run(['git', 'add', data_file], check=False)
+        # Commit y push de todos los cambios
+        subprocess.run(['git', 'add', '-A'], check=False)
         subprocess.run(['git', 'commit', '-m', 'Actualización automática de resultados'], check=False)
         subprocess.run(['git', 'push'], check=False)
-        print("[OK] cambios empujados.")
+        print("[OK] Cambios empujados a GitHub.")
     else:
         print("[INFO] Sin cambios en resultados.")
-
 
 if __name__ == '__main__':
     main()
