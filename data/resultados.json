@@ -15,13 +15,13 @@
         },
         "Ponferradina": {
             "fecha": "2025-05-11",
-            "hora": "19:25"
+            "hora": "19:30"
         }
     },
     "resultados": {
-        "Real Madrid": "4-3",
-        "Barcelona": "4-0",
-        "Ponferradina": "1"
+        "Real Madrid": "",
+        "Barcelona": "",
+        "Ponferradina": ""
     },
     "overrides": {
         "Real Madrid": "https://es.soccerway.com/matches/2025/05/11/spain/primera-division/futbol-club-barcelona/real-madrid-club-de-futbol/4367683/",
