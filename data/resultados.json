@@ -1,21 +1,21 @@
 {
     "partidos": {
-        "Real Madrid": "futbol-club-barcelona vs real-madrid-club-de-futbol",
-        "Barcelona": "club-atletico-de-madrid vs real-sociedad-de-futbol",
-        "Ponferradina": "real-sociedad-de-futbol-ii vs sociedad-deportiva-ponferradina"
+        "Real Madrid": "sevilla-futbol-club vs real-madrid-club-de-futbol",
+        "Barcelona": "futbol-club-barcelona vs villarreal-club-de-futbol",
+        "Ponferradina": "sociedad-deportiva-ponferradina vs cultural-y-deportiva-leonesa"
     },
     "horarios": {
         "Real Madrid": {
-            "fecha": "2025-05-11",
-            "hora": "18:15"
+            "fecha": "2025-05-18",
+            "hora": "21:00"
         },
         "Barcelona": {
-            "fecha": "2025-05-10",
-            "hora": "23:00"
+            "fecha": "2025-05-18",
+            "hora": "21:00"
         },
         "Ponferradina": {
-            "fecha": "2025-05-11",
-            "hora": "19:30"
+            "fecha": "2025-05-18",
+            "hora": "21:00"
         }
     },
     "resultados": {
@@ -24,8 +24,8 @@
         "Ponferradina": ""
     },
     "overrides": {
-        "Real Madrid": "https://es.soccerway.com/matches/2025/05/11/spain/primera-division/futbol-club-barcelona/real-madrid-club-de-futbol/4367683/",
-        "Barcelona": "https://es.soccerway.com/matches/2025/05/10/spain/primera-division/club-atletico-de-madrid/real-sociedad-de-futbol/4367682/",
-        "Ponferradina": "https://es.soccerway.com/matches/2025/05/11/spain/segunda-b/real-sociedad-de-futbol-ii/sociedad-deportiva-ponferradina/4453956/"
+        "Real Madrid": "https://es.soccerway.com/national/spain/primera-division/20242025/regular-season/r82318/",
+        "Barcelona": "https://es.soccerway.com/national/spain/primera-division/20242025/regular-season/r82318/",
+        "Ponferradina": "https://es.soccerway.com/national/spain/primera-division/20242025/regular-season/r82318/"
     }
 }
