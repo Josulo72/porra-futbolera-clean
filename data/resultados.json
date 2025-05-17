@@ -1,0 +1,29 @@
+{
+    "partidos": {
+        "Real Madrid": "Sevilla FC vs Real Madrid CF",
+        "Barcelona": "FC Barcelona vs Villarreal CF",
+        "Ponferradina": "sociedad-deportiva-ponferradina vs cultural-y-deportiva-leonesa"
+    },
+    "horarios": {
+        "Real Madrid": {
+            "fecha": "2025-05-18",
+            "hora": "21:00"
+        },
+        "Barcelona": {
+            "fecha": "2025-05-18",
+            "hora": "21:00"
+        },
+        "Ponferradina": {
+            "fecha": "2025-05-17",
+            "hora": "21:00"
+        }
+    },
+    "resultados": {
+        "Real Madrid": "",
+        "Barcelona": "",
+        "Ponferradina": ""
+    },
+    "overrides": {
+        "Ponferradina": "https://es.soccerway.com/matches/2025/05/17/spain/segunda-b/sociedad-deportiva-ponferradina/cultural-y-deportiva-leonesa/4453966/"
+    }
+}

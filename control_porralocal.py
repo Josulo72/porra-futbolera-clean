@@ -130,16 +130,25 @@ def evaluar_porra():
 
 
 def subir_a_github():
+    """
+    Añade al repositorio los archivos de datos que existan y los sube a GitHub.
+    No intentará añadir archivos ignorados ni inexistentes.
+    """
     try:
-        subprocess.run([
-            "git","add",
-            "data/resultados.json",
-            "data/supervivientes.csv",
-            "data/predicciones.xlsx"
-        ], check=True)
-        subprocess.run(["git","commit","-m","Actualización automática desde GUI"], check=True)
-        subprocess.run(["git","push"], check=True)
-        messagebox.showinfo("🚀 GitHub","Archivos subidos correctamente.")
+        # Construir lista de archivos a añadir dinámicamente
+        files_to_add = []
+        if os.path.exists("data/resultados.json"):
+            files_to_add.append("data/resultados.json")
+        if os.path.exists("data/supervivientes.csv"):
+            files_to_add.append("data/supervivientes.csv")
+        # Solo añadimos si hay archivos válidos
+        if not files_to_add:
+            messagebox.showinfo("🚀 GitHub","No hay archivos nuevos para subir.")
+            return
+        subprocess.run(["git", "add"] + files_to_add, check=True)
+        subprocess.run(["git", "commit", "-m", "Actualización automática desde GUI"], check=True)
+        subprocess.run(["git", "push"], check=True)
+        messagebox.showinfo("🚀 GitHub", "Archivos subidos correctamente.")
     except subprocess.CalledProcessError as e:
         messagebox.showerror("❌ Error en Git", str(e))
 
