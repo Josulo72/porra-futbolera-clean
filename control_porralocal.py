@@ -124,7 +124,9 @@ def evaluar_porra():
             datos = json.load(f)
         df_filtrado = df.copy()
         for partido, res in datos['resultados'].items():
-            df_filtrado = df_filtrado[df_filtrado[partido].astype(str) == res]
+            # Solo filtramos si ya existe un resultado
+            if res:
+                df_filtrado = df_filtrado[df_filtrado[partido].astype(str) == res]
         df_filtrado.to_csv("data/supervivientes.csv", index=False)
         messagebox.showinfo("🎯 Evaluación", f"Supervivientes: {len(df_filtrado)}")
     except Exception as e:
@@ -160,11 +162,16 @@ def scraping_result(url):
         pass
     return None, None
 
-
 def ejecutar_auto_resultados():
     status_var.set("📡 Iniciando monitor de resultados…")
 
     def poll_match(nombre, fecha_var, hora_var, url_var, lbl, convierte_1X2):
+        # Si no han puesto URL override, salimos inmediatamente
+        url = url_var.get().strip()
+        if not url:
+            lbl.config(text=f"⚠️ {nombre}: sin URL override, omito monitoreo")
+            return
+        # 1) Esperar hasta el final del partido
         try:
             dt = datetime.strptime(f"{fecha_var.get()} {hora_var.get()}", "%Y-%m-%d %H:%M")
             espera = (dt - datetime.now()).total_seconds()
@@ -173,6 +180,8 @@ def ejecutar_auto_resultados():
                 time.sleep(espera)
         except:
             pass
+        # … resto de lógica de scraping/1X2/push …
+
 
         for intento in range(1, 5):
             g_loc, g_vis = scraping_result(url_var.get().strip())

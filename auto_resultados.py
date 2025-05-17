@@ -50,6 +50,7 @@ def obtener_resultado(url_override, name_equipo):
     print(f"[ERROR] No se pudo obtener resultado de {name_equipo}")
     return None
 
+
 def convert_to_1X2(local, visitante):
     """
     Convierte un marcador de goles en '1', 'X' o '2'.
@@ -59,6 +60,7 @@ def convert_to_1X2(local, visitante):
     if local < visitante:
         return '2'
     return 'X'
+
 
 def main():
     # Cargar JSON de configuración y overrides
@@ -73,6 +75,7 @@ def main():
     resultados  = datos.get('resultados', {})
     overrides   = datos.get('overrides', {})
 
+    # Procesar overrides (scraping) para cada partido con URL
     for name, url in overrides.items():
         if not url:
             print(f"[WARN] Sin URL override para '{name}', omitiendo.")
@@ -83,7 +86,7 @@ def main():
             continue
         local, visit = res
 
-        # Para Ponferradina (partido 3) usamos 1/X/2
+        # Para Ponferradina usamos 1/X/2
         if name.strip().lower() == 'ponferradina':
             valor = convert_to_1X2(local, visit)
         else:
@@ -95,6 +98,7 @@ def main():
             cambios = True
             print(f"[UPDATE] {name}: {valor}")
 
+    # Si hubo cambios, actualizar archivos y push
     if cambios:
         # Guardar JSON actualizado
         os.makedirs(os.path.dirname(data_file), exist_ok=True)
@@ -102,25 +106,27 @@ def main():
             json.dump(datos, f, indent=2, ensure_ascii=False)
         print("[OK] data/resultados.json actualizado.")
 
-        # Recalcular supervivientes
+        # Recalcular supervivientes solo filtrando partidos con resultado
         if os.path.exists(predictions_xlsx):
             df = pd.read_excel(predictions_xlsx)
             for name, val in datos['resultados'].items():
-                df = df[df[name] == val]
+                if val:
+                    df = df[df[name] == val]
             os.makedirs(os.path.dirname(survivors_csv), exist_ok=True)
             df.to_csv(survivors_csv, index=False, encoding='utf-8')
             print("[OK] data/supervivientes.csv generado.")
 
-        # Commit y push
+        # Commit y push de todos los cambios
         subprocess.run(['git', 'add', '-A'], check=False)
-        subprocess.run(
-            ['git', 'commit', '-m', 'Auto: actualizar resultados (incluye 1X2 Ponferradina)'],
-            check=False
-        )
+        subprocess.run([
+            'git', 'commit', '-m',
+            'Auto: actualizar resultados (incluye 1X2 Ponferradina)'
+        ], check=False)
         subprocess.run(['git', 'push'], check=False)
         print("[OK] Cambios empujados a GitHub.")
     else:
         print("[INFO] Sin cambios en resultados.")
+
 
 if __name__ == '__main__':
     main()
