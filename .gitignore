@@ -1,2 +1,11 @@
-# Ignorar el fichero de predicciones de Excel
-data/predicciones.xlsx
+# Ignorar todos los Excel salvo este
+data/*.xlsx
+!data/predicciones.xlsx
+
+# Ignorar todo lo demás en data/...
+data/*
+
+# ¡Pero NO ignores estos dos JSON/CSV!
+!data/resultados.json
+!data/supervivientes.csv
+
