@@ -135,13 +135,18 @@ def evaluar_porra():
 
 def subir_a_github():
     try:
-        subprocess.run(["git", "add", "data/resultados.json", "data/supervivientes.csv"], check=True)
+        # Añadimos también el Excel de predicciones
+        subprocess.run([
+            "git", "add",
+            "data/resultados.json",
+            "data/supervivientes.csv",
+            "data/predicciones.xlsx"
+        ], check=True)
         subprocess.run(["git", "commit", "-m", "Actualización automática desde GUI"], check=True)
         subprocess.run(["git", "push"], check=True)
         messagebox.showinfo("🚀 GitHub", "Archivos subidos correctamente.")
     except subprocess.CalledProcessError as e:
         messagebox.showerror("❌ Error en Git", str(e))
-
 
 def scraping_result(url):
     try:
