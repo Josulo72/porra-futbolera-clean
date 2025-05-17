@@ -1,0 +1,8 @@
+# Endpoint base para obtener los partidos de LaLiga (PD)  
+api_base_url: "https://api.football-data.org/v4/competitions/PD/matches"
+
+# Tu token personal copiado de Football-Data.org  
+auth_token: "2199ef47f9f54603a585b1097a50e963"
+
+# Tiempo de espera en segundos para las peticiones  
+timeout: 10

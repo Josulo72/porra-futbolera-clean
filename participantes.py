@@ -2,9 +2,19 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import requests
+from api_client.client import AUTH_TOKEN, API_URL, TIMEOUT
 
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
+st.markdown("""
+<style>
+  div[data-testid="stDataFrame"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
+""", unsafe_allow_html=True)
 
 # Ocultar menú, footer y header de Streamlit
 st.markdown(
@@ -29,43 +39,34 @@ custom_teams = {
     "valencia-club-de-futbol":       ("Valencia",         "logos/valencia.png"),
     "real-valladolid-club-de-futbol": ("Real Valladolid", "logos/real_valladolid.png"),
     "futbol-club-barcelona":         ("Barcelona",        "logos/barcelona.png"),
-    "real-madrid-club-de-futbol":    ("Real Madrid",      "logos/real_madrid.png"),
+    "real-madrid-club-de-futbol":    ("Real Madrid CF",   "logos/real_madrid.png"),
     "real-club-celta-de-vigo":       ("Celta",            "logos/celta.png"),
-    "sevilla-futbol-club":           ("Sevilla",          "logos/sevilla.png"),
+    "sevilla-futbol-club":           ("Sevilla FC",       "logos/sevilla.png"),
     "club-deportivo-leganes-sad":    ("Leganés",          "logos/leganes.png"),
     "reial-club-deportiu-espanyol":  ("Espanyol",         "logos/espanyol.png"),
-    "real-betis":                    ("Betis",            "logos/betis.png"),
-    "real-sociedad-de-futbol":       ("R. Sociedad",      "logos/real_sociedad.png"),
-    "athletic-club":                 ("Athletic",         "logos/athletic.png"),
-    "girona-fc":                     ("Girona",           "logos/girona.png"),
+    "real-betis":                    ("Real Betis",       "logos/betis.png"),
+    "real-sociedad-de-futbol":       ("Real Sociedad",    "logos/sociedad.png"),
+    "athletic-club":                 ("Athletic Club",    "logos/athletic.png"),
+    "girona-fc":                     ("Girona FC",        "logos/girona.png"),
     "real-club-deportivo-mallorca":  ("Mallorca",         "logos/mallorca.png"),
-    # Primera Federación
-    "gimnastica-segoviana-club-de-futbol": ("G. Segoviana",     "logos/segoviana.png"),
-    "real-sociedad-de-futbol-ii":          ("R. Sociedad B",    "logos/real_sociedad_b.png"),
-    "sociedad-deportiva-ponferradina":     ("Ponferradina",     "logos/ponferradina.png"),
-    "athletic-club-bilbao-ii":             ("Bilbao Athletic",  "logos/bilbao_athletic.png"),
-    "arenteiro":                           ("CD Arenteiro",     "logos/arenteiro.png"),
-    "zamora-cf":                           ("Zamora",           "logos/zamora.png"),
-    "real-union-club-de-irun":             ("Real Unión",       "logos/real_union.png"),
-    "sd-tarazona":                         ("Tarazona",         "logos/tarazona.png"),
-    "ourense-cf":                          ("Ourense CF",       "logos/ourense.png"),
-    "cultural-y-deportiva-leonesa":        ("Cultural",         "logos/cultural.png"),
-    "barakaldo-club-de-futbol":            ("Barakaldo",        "logos/barakaldo.png"),
-    "sd-amorebieta":                       ("SD Amorebieta",    "logos/amorebieta.png"),
-    "unionistas-de-salamanca":             ("Unionistas CF",    "logos/unionistas.png"),
-    "sestao-river-club":                   ("Sestao",           "logos/sestao.png"),
-    "club-deportivo-lugo":                 ("Lugo",             "logos/lugo.png"),
-    "futbol-club-barcelona-ii":            ("Barcelona B",      "logos/barcelona_b.png"),
-    "fc-andorra":                          ("Andorra",          "logos/andorra.png"),
-    "club-gimnastic-de-tarragona":         ("Gimnàstic",        "logos/gimnastic.png"),
-    "real-club-celta-de-vigo-ii":          ("Celta B",          "logos/celta_b.png"),
-    "ca-osasuna-ii":                       ("Osasuna B",        "logos/osasuna_b.png")
+    # Primera RFEF
+    "sociedad-deportiva-ponferradina": ("Ponferradina",   "logos/ponferradina.png"),
+    "cultural-y-deportiva-leonesa":    ("Cultural Leonesa","logos/cultural.png"),
+    # ... añade más si hace falta
 }
-
-# Función para convertir un slug genérico en nombre legible
 
 def slug_to_name(slug: str) -> str:
     return slug.replace('-', ' ').title()
+
+# Mapeo de logos de la API para LaLiga
+try:
+    teams_url = API_URL.rsplit("/", 1)[0] + "/teams"
+    resp = requests.get(teams_url, headers={"X-Auth-Token": AUTH_TOKEN}, timeout=TIMEOUT)
+    resp.raise_for_status()
+    data_teams = resp.json().get("teams", [])
+    crest_map = {team["name"]: team.get("crestUrl") for team in data_teams}
+except:
+    crest_map = {}
 
 # Carga de datos y renderizado de la app
 try:
@@ -77,7 +78,6 @@ try:
     st.subheader("📋 Partidos de la jornada")
     if partidos:
         for team_key, partido_str in partidos.items():
-            # Extraer slugs del string
             if "vs" in partido_str:
                 local_slug, visit_slug = [s.strip() for s in partido_str.split("vs")]
                 local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
@@ -87,16 +87,27 @@ try:
                 local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
                 visit_name = visit_logo = None
 
+            # Usar crestUrl de API si está disponible
+            if local_name in crest_map:
+                local_logo = crest_map[local_name]
+            if visit_name in crest_map:
+                visit_logo = crest_map[visit_name]
+
             display = f"{local_name} vs {visit_name}" if visit_name else local_name
             score = resultados.get(team_key, "--")
 
-            # Layout en dos columnas: escudos y texto/marcador
             cols = st.columns([1, 6])
             with cols[0]:
-                if local_logo and os.path.exists(local_logo):
-                    st.image(local_logo, width=30)
-                if visit_logo and os.path.exists(visit_logo):
-                    st.image(visit_logo, width=30)
+                if local_logo:
+                    if isinstance(local_logo, str) and local_logo.startswith("http"):
+                        st.image(local_logo, width=30)
+                    elif os.path.exists(local_logo):
+                        st.image(local_logo, width=30)
+                if visit_logo:
+                    if isinstance(visit_logo, str) and visit_logo.startswith("http"):
+                        st.image(visit_logo, width=30)
+                    elif os.path.exists(visit_logo):
+                        st.image(visit_logo, width=30)
             with cols[1]:
                 st.markdown(
                     f"**⚽ {display}** → "
@@ -117,7 +128,14 @@ try:
             st.success(f"🎉 ¡Quedan {len(df)} participantes en juego!")
             st.dataframe(df, use_container_width=True)
     else:
-        st.info("Aún no se han publicado resultados.")
+    # Elimina la columna de índice que Streamlit mete por defecto
+        if 'Unnamed: 0' in df.columns:
+            df = df.drop(columns=['Unnamed: 0'])
+    # Reinicia el índice para no mostrar números a la izquierda
+        df = df.reset_index(drop=True)
+
+    # Muestra la tabla ya sin esa columna extra
+        st.dataframe(df, use_container_width=True)
 
 except FileNotFoundError:
     st.error("❌ data/resultados.json no encontrado.")

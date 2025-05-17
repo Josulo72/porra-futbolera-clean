@@ -115,9 +115,12 @@ def main():
             df_surv.to_csv(survivors_csv, index=False, encoding='utf-8')
             print("[OK] data/supervivientes.csv generado.")
 
-        # Commit y push de todos los cambios
-        subprocess.run(['git', 'add', '-A'], check=False)
-        subprocess.run(['git', 'commit', '-m', 'Actualización automática de resultados'], check=False)
+        # Commit y push de todos los cambios (aunque no haya cambios, no falla)
+        subprocess.run(['git', 'add', '-A'], check=True)
+        subprocess.run(
+            ['git', 'commit', '--allow-empty', '-m', 'Actualización automática de resultados'],
+            check=False
+        )
         subprocess.run(['git', 'push'], check=False)
         print("[OK] Cambios empujados a GitHub.")
     else:
