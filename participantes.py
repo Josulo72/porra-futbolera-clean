@@ -7,6 +7,7 @@ from api_client.client import AUTH_TOKEN, API_URL, TIMEOUT
 
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
+# Hacer la tabla desplazable horizontalmente en móviles
 st.markdown("""
 <style>
   div[data-testid="stDataFrame"] {
@@ -54,6 +55,7 @@ custom_teams = {
     "cultural-y-deportiva-leonesa":    ("Cultural Leonesa","logos/cultural.png"),
     # ... añade más si hace falta
 }
+
 
 def slug_to_name(slug: str) -> str:
     return slug.replace('-', ' ').title()
@@ -122,20 +124,18 @@ try:
     if os.path.exists("data/supervivientes.csv"):
         df = pd.read_csv("data/supervivientes.csv")
         st.subheader("🟢 Participantes que siguen vivos")
+        # Elimina la columna de índice que Streamlit mete por defecto
+        if 'Unnamed: 0' in df.columns:
+            df = df.drop(columns=['Unnamed: 0'])
+        # Reinicia el índice para no mostrar números a la izquierda
+        df = df.reset_index(drop=True)
         if df.empty:
             st.error("😢 Ningún participante acertó los tres partidos.")
         else:
             st.success(f"🎉 ¡Quedan {len(df)} participantes en juego!")
             st.dataframe(df, use_container_width=True)
     else:
-    # Elimina la columna de índice que Streamlit mete por defecto
-        if 'Unnamed: 0' in df.columns:
-            df = df.drop(columns=['Unnamed: 0'])
-    # Reinicia el índice para no mostrar números a la izquierda
-        df = df.reset_index(drop=True)
-
-    # Muestra la tabla ya sin esa columna extra
-        st.dataframe(df, use_container_width=True)
+        st.info("Aún no se han publicado resultados.")
 
 except FileNotFoundError:
     st.error("❌ data/resultados.json no encontrado.")
