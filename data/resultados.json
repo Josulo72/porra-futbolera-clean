@@ -10,12 +10,12 @@
             "hora": "21:00"
         },
         "Barcelona": {
-            "fecha": "2025-05-18",
+            "fecha": "2025-05-17",
             "hora": "21:00"
         },
         "Ponferradina": {
             "fecha": "2025-05-17",
-            "hora": "21:00"
+            "hora": "21_00"
         }
     },
     "resultados": {
