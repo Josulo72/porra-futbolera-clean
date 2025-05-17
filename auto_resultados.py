@@ -11,7 +11,7 @@ import time
 # Parámetros generales
 timeout = 5      # segundos de espera por petición
 retries = 3      # número de reintentos en caso de fallo
-data_file        = 'data/resultados.json'
+data_file     = 'data/resultados.json'
 predictions_xlsx = 'data/predicciones.xlsx'
 survivors_csv    = 'data/supervivientes.csv'
 
@@ -23,14 +23,16 @@ headers_scrap = {
     )
 }
 
+
 def obtener_resultado(url_override, name_equipo):
     """
     Realiza scraping directo usando la URL absoluta en url_override
     y devuelve una tupla (goles_local, goles_visitante), o None si falla.
     """
+    url = url_override  # usamos la URL completa que proporcionas
     for intento in range(1, retries + 1):
         try:
-            resp = requests.get(url_override, headers=headers_scrap, timeout=timeout)
+            resp = requests.get(url, headers=headers_scrap, timeout=timeout)
             resp.raise_for_status()
             soup = BeautifulSoup(resp.text, 'html.parser')
             # Intento con selectores específicos
@@ -43,17 +45,18 @@ def obtener_resultado(url_override, name_equipo):
             m = re.search(r"(\d+)[-–](\d+)", texto)
             if m:
                 return int(m.group(1)), int(m.group(2))
+            # Si llegamos aquí, no encontramos marcador
             raise ValueError("Marcador no localizado en la página")
         except Exception as e:
-            print(f"[WARN] {name_equipo} intento {intento}/{retries} FALLIDO: {e}")
+            print(f"[WARN] {name_equipo} intento {intento}/{retries} FALLIDO en {url}: {e}")
             time.sleep(1)
-    print(f"[ERROR] No se pudo obtener resultado de {name_equipo}")
+    print(f"[ERROR] No se pudo obtener resultado de {name_equipo} en {url}")
     return None
 
 
 def convert_to_1X2(local, visitante):
     """
-    Convierte un marcador de goles en '1', 'X' o '2'.
+    Convierte un marcador de goles en 1/X/2.
     """
     if local > visitante:
         return '1'
@@ -64,41 +67,37 @@ def convert_to_1X2(local, visitante):
 
 def main():
     # Cargar JSON de configuración y overrides
-    if not os.path.exists(data_file):
+    if os.path.exists(data_file):
+        with open(data_file, 'r', encoding='utf-8') as f:
+            datos = json.load(f)
+    else:
         print(f"[ERROR] No existe '{data_file}'. Ejecuta primero la interfaz de control.")
         return
 
-    with open(data_file, 'r', encoding='utf-8') as f:
-        datos = json.load(f)
+    cambios = False
+    resultados = datos.get('resultados', {})
+    overrides  = datos.get('overrides', {})
 
-    cambios     = False
-    resultados  = datos.get('resultados', {})
-    overrides   = datos.get('overrides', {})
-
-    # Procesar overrides (scraping) para cada partido con URL
+    # Iterar cada partido según claves en overrides
     for name, url in overrides.items():
         if not url:
-            print(f"[WARN] Sin URL override para '{name}', omitiendo.")
+            print(f"[WARN] No hay URL override para '{name}', se omite.")
             continue
-
         res = obtener_resultado(url, name)
         if not res:
             continue
         local, visit = res
-
-        # Para Ponferradina usamos 1/X/2
-        if name.strip().lower() == 'ponferradina':
+        if name.lower() == 'ponferradina':
             valor = convert_to_1X2(local, visit)
         else:
             valor = f"{local}-{visit}"
-
         if resultados.get(name) != valor:
             resultados[name] = valor
             datos['resultados'][name] = valor
             cambios = True
             print(f"[UPDATE] {name}: {valor}")
 
-    # Si hubo cambios, actualizar archivos y push
+    # Si hubo cambios, actualizar JSON, CSV de supervivientes y versionar en Git
     if cambios:
         # Guardar JSON actualizado
         os.makedirs(os.path.dirname(data_file), exist_ok=True)
@@ -106,27 +105,23 @@ def main():
             json.dump(datos, f, indent=2, ensure_ascii=False)
         print("[OK] data/resultados.json actualizado.")
 
-        # Recalcular supervivientes solo filtrando partidos con resultado
+        # Recalcular supervivientes desde predicciones.xlsx
         if os.path.exists(predictions_xlsx):
             df = pd.read_excel(predictions_xlsx)
+            df_surv = df.copy()
             for name, val in datos['resultados'].items():
-                if val:
-                    df = df[df[name] == val]
+                df_surv = df_surv[df_surv[name] == val]
             os.makedirs(os.path.dirname(survivors_csv), exist_ok=True)
-            df.to_csv(survivors_csv, index=False, encoding='utf-8')
+            df_surv.to_csv(survivors_csv, index=False, encoding='utf-8')
             print("[OK] data/supervivientes.csv generado.")
 
         # Commit y push de todos los cambios
         subprocess.run(['git', 'add', '-A'], check=False)
-        subprocess.run([
-            'git', 'commit', '-m',
-            'Auto: actualizar resultados (incluye 1X2 Ponferradina)'
-        ], check=False)
+        subprocess.run(['git', 'commit', '-m', 'Actualización automática de resultados'], check=False)
         subprocess.run(['git', 'push'], check=False)
         print("[OK] Cambios empujados a GitHub.")
     else:
         print("[INFO] Sin cambios en resultados.")
-
 
 if __name__ == '__main__':
     main()

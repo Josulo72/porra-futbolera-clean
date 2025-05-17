@@ -1,4 +1,2 @@
-# Ignorar todos los Excel salvo predicciones.xlsx
-data/*.xlsx
-!data/predicciones.xlsx
-
+# Ignorar el fichero de predicciones de Excel
+data/predicciones.xlsx
