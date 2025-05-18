@@ -39,27 +39,7 @@ custom_teams = {
     "athletic-club":                 ("Athletic",         "logos/athletic.png"),
     "girona-fc":                     ("Girona",           "logos/girona.png"),
     "real-club-deportivo-mallorca":  ("Mallorca",         "logos/mallorca.png"),
-    "Real Sociedad de Fútbol":        ("Real Sociedad de Fútbol",      "logos/sociedad.png"),
-    "Villarreal CF":                  ("Villarreal CF",                "logos/villarreal.png"),
-    "Valencia CF":                    ("Valencia CF",                  "logos/valencia.png"),
-    "Real Valladolid CF":             ("Real Valladolid CF",           "logos/real_valladolid.png"),
-    "Deportivo Alavés":               ("Deportivo Alavés",             "logos/alaves.png"),
-    "UD Las Palmas":                  ("UD Las Palmas",                "logos/las_palmas.png"),
-    "Girona FC":                      ("Girona FC",                    "logos/girona.png"),
-    "RC Celta de Vigo":               ("RC Celta de Vigo",             "logos/celta.png"),
-    "Sevilla FC":                     ("Sevilla FC",                   "logos/sevilla.png"),
-    "CD Leganés":                     ("CD Leganés",                   "logos/leganes.png"),
-    "Athletic Club":                  ("Athletic Club",                "logos/athletic.png"),
-    "Club Atlético de Madrid":        ("Club Atlético de Madrid",      "logos/atletico.png"),
-    "CA Osasuna":                     ("CA Osasuna",                   "logos/osasuna.png"),
-    "RCD Espanyol de Barcelona":      ("RCD Espanyol de Barcelona",    "logos/espanyol.png"),
-    "FC Barcelona":                   ("FC Barcelona",                 "logos/barcelona.png"),
-    "Getafe CF":                      ("Getafe CF",                    "logos/getafe.png"),
-    "Real Madrid CF":                 ("Real Madrid CF",               "logos/real_madrid.png"),
-    "Rayo Vallecano de Madrid":       ("Rayo Vallecano de Madrid",     "logos/rayo.png"),
-    "RCD Mallorca":                   ("RCD Mallorca",                 "logos/mallorca.png"),
-    "Real Betis Balompié":            ("Real Betis Balompié",          "logos/betis.png"),
-
+    # Primera Federación
     "gimnastica-segoviana-club-de-futbol": ("G. Segoviana",     "logos/segoviana.png"),
     "real-sociedad-de-futbol-ii":          ("R. Sociedad B",    "logos/real_sociedad_b.png"),
     "sociedad-deportiva-ponferradina":     ("Ponferradina",     "logos/ponferradina.png"),
@@ -81,6 +61,28 @@ custom_teams = {
     "real-club-celta-de-vigo-ii":          ("Celta B",          "logos/celta_b.png"),
     "ca-osasuna-ii":                       ("Osasuna B",        "logos/osasuna_b.png")
 }
+custom_teams.update({
+    "Real Sociedad de Fútbol":    ("Real Sociedad de Fútbol",  "logos/sociedad.png"),
+    "Villarreal CF":              ("Villarreal CF",            "logos/villarreal.png"),
+    "Valencia CF":                ("Valencia CF",              "logos/valencia.png"),
+    "Real Valladolid CF":         ("Real Valladolid CF",       "logos/real_valladolid.png"),
+    "Deportivo Alavés":           ("Deportivo Alavés",         "logos/alaves.png"),
+    "UD Las Palmas":              ("UD Las Palmas",            "logos/las_palmas.png"),
+    "Girona FC":                  ("Girona FC",                "logos/girona.png"),
+    "RC Celta de Vigo":           ("RC Celta de Vigo",         "logos/celta.png"),
+    "Sevilla FC":                 ("Sevilla FC",               "logos/sevilla.png"),
+    "CD Leganés":                 ("CD Leganés",               "logos/leganes.png"),
+    "Athletic Club":              ("Athletic Club",            "logos/athletic.png"),
+    "Club Atlético de Madrid":    ("Club Atlético de Madrid",  "logos/atletico.png"),
+    "CA Osasuna":                 ("CA Osasuna",               "logos/osasuna.png"),
+    "RCD Espanyol de Barcelona":  ("RCD Espanyol de Barcelona","logos/espanyol.png"),
+    "FC Barcelona":               ("FC Barcelona",             "logos/barcelona.png"),
+    "Getafe CF":                  ("Getafe CF",                "logos/getafe.png"),
+    "Real Madrid CF":             ("Real Madrid CF",           "logos/real_madrid.png"),
+    "Rayo Vallecano de Madrid":   ("Rayo Vallecano de Madrid", "logos/rayo.png"),
+    "RCD Mallorca":               ("RCD Mallorca",             "logos/mallorca.png"),
+    "Real Betis Balompié":        ("Real Betis Balompié",      "logos/betis.png"),
+})
 
 # Función para convertir un slug genérico en nombre legible
 
