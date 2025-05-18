@@ -15,12 +15,15 @@
         },
         "Ponferradina": {
             "fecha": "2025-05-17",
-            "hora": "1"
+            "hora": "21:00"
         }
     },
     "resultados": {
         "Real Madrid": "",
         "Barcelona": "",
         "Ponferradina": "1"
+    },
+    "overrides": {
+        "Ponferradina": "https://es.soccerway.com/matches/2025/05/17/spain/segunda-b/sociedad-deportiva-ponferradina/cultural-y-deportiva-leonesa/4453966/"
     }
 }
