@@ -22,14 +22,6 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-# Inyectamos Bootstrap una sola vez
-st.markdown("""
-<link
-  rel="stylesheet"
-  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-/>
-""", unsafe_allow_html=True)
-
 # Función para convertir un logo local en data URI base64
 def img_to_data_uri(path: str) -> str:
     if not os.path.exists(path):
@@ -37,9 +29,9 @@ def img_to_data_uri(path: str) -> str:
     with open(path, "rb") as f:
         data = f.read()
     b64 = base64.b64encode(data).decode("utf-8")
-    # detectamos extensión para la cabecera
-    ext = os.path.splitext(path)[1].lstrip(".").lower()
+    ext = os.path.splitext(path)[1].lstrip('.').lower()
     return f"data:image/{ext};base64,{b64}"
+
 # Diccionario completo de slugs a (nombre legible, ruta del logo)
 custom_teams = {
     # LaLiga
@@ -108,72 +100,79 @@ custom_teams.update({
     "Real Betis Balompié":        ("Real Betis Balompié",      "logos/betis.png"),
 })
 
-# Función auxiliar para nombre legible
+# Auxiliar nombre legible
 def slug_to_name(slug: str) -> str:
     if slug in custom_teams:
         return custom_teams[slug][0]
-    parts = slug.replace("-", " ").split()
-    return " ".join(p.capitalize() for p in parts)
+    parts = slug.replace('-', ' ').split()
+    return ' '.join(p.capitalize() for p in parts)
 
-# Carga de datos de resultados
+# Carga de datos
 try:
-    with open("data/resultados.json", "r", encoding="utf-8") as f:
+    with open('data/resultados.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
-    partidos   = data.get("partidos", {})
-    resultados = data.get("resultados", {})
-    fechas     = data.get("fechas", {})
+    partidos   = data.get('partidos', {})
+    resultados = data.get('resultados', {})
+    fechas     = data.get('fechas', {})
 except Exception:
-    st.error("❌ Error al leer 'data/resultados.json'. Revisa que exista y sea JSON válido.")
+    st.error("❌ Error cargando 'data/resultados.json'.")
     partidos, resultados, fechas = {}, {}, {}
 
-# Renderizado de partidos
+# Renderizado responsivo con Bootstrap incluido en iframe
+bootstrap_link = """
+<link
+  rel=\"stylesheet\"
+  href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css\"
+/>
+"""
+
 if partidos:
     for key, enfrent in partidos.items():
         try:
-            local_slug, visitante_slug = enfrent.split(" vs ")
+            local_slug, visitante_slug = enfrent.split(' vs ')
         except ValueError:
             continue
 
-        nombre_local, logo_local_path = custom_teams.get(local_slug, (slug_to_name(local_slug), ""))
-        nombre_visitante, logo_visitante_path = custom_teams.get(visitante_slug, (slug_to_name(visitante_slug), ""))
+        nombre_local, logo_local_path = custom_teams.get(local_slug, (slug_to_name(local_slug), ''))
+        nombre_visitante, logo_visitante_path = custom_teams.get(visitante_slug, (slug_to_name(visitante_slug), ''))
 
-        # Convertimos a data URIs
         logo_local_uri     = img_to_data_uri(logo_local_path)
         logo_visitante_uri = img_to_data_uri(logo_visitante_path)
-        marcador           = resultados.get(key, "-")
-        fecha              = fechas.get(key, "")
+        marcador           = resultados.get(key, '-')
+        fecha              = fechas.get(key, '')
 
         partido_html = f"""
-        <div class="container my-4 p-3 border rounded">
-          <div class="row text-center align-items-center">
-            <div class="col-4 col-md-3">
-              <img src="{logo_local_uri}" class="img-fluid" style="max-height:80px;" alt="{nombre_local}">
-              <div class="mt-2">{nombre_local}</div>
+        {bootstrap_link}
+        <div class=\"container-fluid my-3 p-3 border rounded\">
+          <div class=\"row text-center align-items-center\">
+            <div class=\"col-4 col-md-3\">
+              <img src=\"{logo_local_uri}\" class=\"img-fluid mx-auto d-block\" style=\"max-height:80px;\"> 
+              <div class=\"mt-2\">{nombre_local}</div>
             </div>
-            <div class="col-4 col-md-6">
-              <div class="h1">{marcador}</div>
-              <small class="text-muted">{fecha}</small>
+            <div class=\"col-4 col-md-6\">
+              <div class=\"h1\">{marcador}</div>
+              <small class=\"text-muted d-block\">{fecha}</small>
               <div>FINALIZADO</div>
             </div>
-            <div class="col-4 col-md-3">
-              <img src="{logo_visitante_uri}" class="img-fluid" style="max-height:80px;" alt="{nombre_visitante}">
-              <div class="mt-2">{nombre_visitante}</div>
+            <div class=\"col-4 col-md-3\">
+              <img src=\"{logo_visitante_uri}\" class=\"img-fluid mx-auto d-block\" style=\"max-height:80px;\"> 
+              <div class=\"mt-2\">{nombre_visitante}</div>
             </div>
           </div>
         </div>
         """
-        st_html(partido_html, height=200)
+        st_html(partido_html, height=180)
 else:
     st.info("⚠️ No hay partidos programados.")
 
-# Sección de participantes “vivos”
-csv_path = "data/supervivientes.csv"
+# Participantes vivos
+csv_path = 'data/supervivientes.csv'
 if os.path.exists(csv_path):
     df = pd.read_csv(csv_path)
     if df.empty:
-        st.error("😢 Ningún participante acertó en esta jornada.")
+        st.error('😢 Ningún participante acertó en esta jornada.')
     else:
-        st.write(f"🎉 {len(df)} participantes siguen vivos:")
+        st.write(f'🎉 {len(df)} participantes siguen vivos:')
         st.dataframe(df)
 else:
-    st.info("ℹ️ Aún no se han publicado los resultados de supervivientes.")
+    st.info('ℹ️ Aún no se han publicado los resultados de supervivientes.')
