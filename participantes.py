@@ -2,27 +2,9 @@ import streamlit as st
 import pandas as pd
 import json
 import os
-import requests
-from api_client.client import AUTH_TOKEN, API_URL, TIMEOUT
-import pathlib
-
-# Base dir de la app (donde está participantes.py)
-BASE_DIR = pathlib.Path(__file__).parent
 
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
-
-# Hacer la tabla desplazable horizontalmente en móviles
-st.markdown(
-    """
-    <style>
-      div[data-testid="stDataFrame"] {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-    </style>
-    """, unsafe_allow_html=True
-)
 
 # Ocultar menú, footer y header de Streamlit
 st.markdown(
@@ -34,127 +16,132 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Diccionario de slugs a (nombre legible, logo local)
+# Diccionario completo de slugs a (nombre legible, ruta del logo)
 custom_teams = {
     # LaLiga
-    "rayo-vallecano":                ("Rayo Vallecano",    "logos/rayo.png"),
-    "getafe-club-de-futbol":         ("Getafe CF",         "logos/getafe.png"),
-    "deportivo-alaves":              ("Deportivo Alavés",  "logos/alaves.png"),
-    "club-atletico-de-madrid":       ("Atlético de Madrid","logos/atletico.png"),
-    "villarreal-club-de-futbol":     ("Villarreal CF",     "logos/villarreal.png"),
-    "club-atletico-osasuna":         ("Osasuna",           "logos/osasuna.png"),
-    "union-deportiva-las-palmas":    ("UD Las Palmas",     "logos/las_palmas.png"),
-    "valencia-club-de-futbol":       ("Valencia CF",       "logos/valencia.png"),
-    "real-valladolid-club-de-futbol": ("Real Valladolid",  "logos/real_valladolid.png"),
-    "futbol-club-barcelona":         ("FC Barcelona",      "logos/barcelona.png"),
-    "real-madrid-club-de-futbol":    ("Real Madrid CF",    "logos/real_madrid.png"),
-    "real-club-celta-de-vigo":       ("RC Celta de Vigo",  "logos/celta.png"),
-    "sevilla-futbol-club":           ("Sevilla FC",        "logos/sevilla.png"),
-    "club-deportivo-leganes-sad":    ("CD Leganés",        "logos/leganes.png"),
-    "reial-club-deportiu-espanyol":  ("RCD Espanyol",      "logos/espanyol.png"),
-    "real-betis":                    ("Real Betis",        "logos/betis.png"),
-    "real-sociedad-de-futbol":       ("Real Sociedad",     "logos/sociedad.png"),
-    "athletic-club":                 ("Athletic Club",     "logos/athletic.png"),
-    "girona-fc":                     ("Girona FC",         "logos/girona.png"),
-    "real-club-deportivo-mallorca":  ("RCD Mallorca",      "logos/mallorca.png"),
-    # Primera RFEF
-    "sociedad-deportiva-ponferradina": ("SD Ponferradina",  "logos/ponferradina.png"),
-    "cultural-y-deportiva-leonesa":    ("Cultural Leonesa", "logos/cultural.png"),
+    "rayo-vallecano":                ("Rayo",             "logos/rayo.png"),
+    "getafe-club-de-futbol":         ("Getafe",           "logos/getafe.png"),
+    "deportivo-alaves":              ("Alavés",           "logos/alaves.png"),
+    "club-atletico-de-madrid":       ("Atlético",         "logos/atletico.png"),
+    "villarreal-club-de-futbol":     ("Villarreal",       "logos/villarreal.png"),
+    "club-atletico-osasuna":         ("Osasuna",          "logos/osasuna.png"),
+    "union-deportiva-las-palmas":    ("Las Palmas",       "logos/las_palmas.png"),
+    "valencia-club-de-futbol":       ("Valencia",         "logos/valencia.png"),
+    "real-valladolid-club-de-futbol": ("Real Valladolid", "logos/real_valladolid.png"),
+    "futbol-club-barcelona":         ("Barcelona",        "logos/barcelona.png"),
+    "real-madrid-club-de-futbol":    ("Real Madrid",      "logos/real_madrid.png"),
+    "real-club-celta-de-vigo":       ("Celta",            "logos/celta.png"),
+    "sevilla-futbol-club":           ("Sevilla",          "logos/sevilla.png"),
+    "club-deportivo-leganes-sad":    ("Leganés",          "logos/leganes.png"),
+    "reial-club-deportiu-espanyol":  ("Espanyol",         "logos/espanyol.png"),
+    "real-betis":                    ("Betis",            "logos/betis.png"),
+    "real-sociedad-de-futbol":       ("R. Sociedad",      "logos/real_sociedad.png"),
+    "athletic-club":                 ("Athletic",         "logos/athletic.png"),
+    "girona-fc":                     ("Girona",           "logos/girona.png"),
+    "real-club-deportivo-mallorca":  ("Mallorca",         "logos/mallorca.png"),
+    "Real Sociedad de Fútbol":        ("Real Sociedad de Fútbol",      "logos/sociedad.png"),
+    "Villarreal CF":                  ("Villarreal CF",                "logos/villarreal.png"),
+    "Valencia CF":                    ("Valencia CF",                  "logos/valencia.png"),
+    "Real Valladolid CF":             ("Real Valladolid CF",           "logos/real_valladolid.png"),
+    "Deportivo Alavés":               ("Deportivo Alavés",             "logos/alaves.png"),
+    "UD Las Palmas":                  ("UD Las Palmas",                "logos/las_palmas.png"),
+    "Girona FC":                      ("Girona FC",                    "logos/girona.png"),
+    "RC Celta de Vigo":               ("RC Celta de Vigo",             "logos/celta.png"),
+    "Sevilla FC":                     ("Sevilla FC",                   "logos/sevilla.png"),
+    "CD Leganés":                     ("CD Leganés",                   "logos/leganes.png"),
+    "Athletic Club":                  ("Athletic Club",                "logos/athletic.png"),
+    "Club Atlético de Madrid":        ("Club Atlético de Madrid",      "logos/atletico.png"),
+    "CA Osasuna":                     ("CA Osasuna",                   "logos/osasuna.png"),
+    "RCD Espanyol de Barcelona":      ("RCD Espanyol de Barcelona",    "logos/espanyol.png"),
+    "FC Barcelona":                   ("FC Barcelona",                 "logos/barcelona.png"),
+    "Getafe CF":                      ("Getafe CF",                    "logos/getafe.png"),
+    "Real Madrid CF":                 ("Real Madrid CF",               "logos/real_madrid.png"),
+    "Rayo Vallecano de Madrid":       ("Rayo Vallecano de Madrid",     "logos/rayo.png"),
+    "RCD Mallorca":                   ("RCD Mallorca",                 "logos/mallorca.png"),
+    "Real Betis Balompié":            ("Real Betis Balompié",          "logos/betis.png"),
+
+    "gimnastica-segoviana-club-de-futbol": ("G. Segoviana",     "logos/segoviana.png"),
+    "real-sociedad-de-futbol-ii":          ("R. Sociedad B",    "logos/real_sociedad_b.png"),
+    "sociedad-deportiva-ponferradina":     ("Ponferradina",     "logos/ponferradina.png"),
+    "athletic-club-bilbao-ii":             ("Bilbao Athletic",  "logos/bilbao_athletic.png"),
+    "arenteiro":                           ("CD Arenteiro",     "logos/arenteiro.png"),
+    "zamora-cf":                           ("Zamora",           "logos/zamora.png"),
+    "real-union-club-de-irun":             ("Real Unión",       "logos/real_union.png"),
+    "sd-tarazona":                         ("Tarazona",         "logos/tarazona.png"),
+    "ourense-cf":                          ("Ourense CF",       "logos/ourense.png"),
+    "cultural-y-deportiva-leonesa":        ("Cultural",         "logos/cultural.png"),
+    "barakaldo-club-de-futbol":            ("Barakaldo",        "logos/barakaldo.png"),
+    "sd-amorebieta":                       ("SD Amorebieta",    "logos/amorebieta.png"),
+    "unionistas-de-salamanca":             ("Unionistas CF",    "logos/unionistas.png"),
+    "sestao-river-club":                   ("Sestao",           "logos/sestao.png"),
+    "club-deportivo-lugo":                 ("Lugo",             "logos/lugo.png"),
+    "futbol-club-barcelona-ii":            ("Barcelona B",      "logos/barcelona_b.png"),
+    "fc-andorra":                          ("Andorra",          "logos/andorra.png"),
+    "club-gimnastic-de-tarragona":         ("Gimnàstic",        "logos/gimnastic.png"),
+    "real-club-celta-de-vigo-ii":          ("Celta B",          "logos/celta_b.png"),
+    "ca-osasuna-ii":                       ("Osasuna B",        "logos/osasuna_b.png")
 }
 
-# Función para pasador slug a nombre legible
+# Función para convertir un slug genérico en nombre legible
+
 def slug_to_name(slug: str) -> str:
     return slug.replace('-', ' ').title()
 
-# Función para buscar crestUrl de forma flexible
-def find_crest(name: str, crest_map: dict) -> str | None:
-    low = name.lower()
-    for team_name, url in crest_map.items():
-        if team_name.lower() == low:
-            return url
-    for team_name, url in crest_map.items():
-        tn = team_name.lower()
-        if low in tn or tn in low:
-            return url
-    return None
-
-# Cargamos logos desde API (crestUrl)
+# Carga de datos y renderizado de la app
 try:
-    teams_url = API_URL.rsplit('/', 1)[0] + '/teams'
-    resp = requests.get(teams_url, headers={'X-Auth-Token': AUTH_TOKEN}, timeout=TIMEOUT)
-    resp.raise_for_status()
-    crest_map = {t['name']: t.get('crestUrl') for t in resp.json().get('teams', [])}
-except:
-    crest_map = {}
-
-# Renderizado de la app
-st.title('📋 Partidos de la jornada')
-
-try:
-    with open('data/resultados.json', 'r', encoding='utf-8') as f:
+    with open("data/resultados.json", "r", encoding="utf-8") as f:
         datos = json.load(f)
-except FileNotFoundError:
-    st.error('❌ data/resultados.json no encontrado.')
-    st.stop()
-except json.JSONDecodeError:
-    st.error('❌ El JSON de resultados está corrupto.')
-    st.stop()
+    partidos = datos.get("partidos", {})      # Dict: clave -> "slug1 vs slug2"
+    resultados = datos.get("resultados", {})  # Dict: clave -> marcador
 
-partidos = datos.get('partidos', {})
-resultados = datos.get('resultados', {})
+    st.subheader("📋 Partidos de la jornada")
+    if partidos:
+        for team_key, partido_str in partidos.items():
+            # Extraer slugs del string
+            if "vs" in partido_str:
+                local_slug, visit_slug = [s.strip() for s in partido_str.split("vs")]
+                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
+                visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
+            else:
+                local_slug = partido_str.strip()
+                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
+                visit_name = visit_logo = None
 
-if partidos:
-    for key, part in partidos.items():
-        local_slug, visit_slug = [s.strip() for s in part.split('vs')] if 'vs' in part else (part, None)
-        local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
-        visit_name, visit_logo = (None, None)
-        if visit_slug:
-            visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
+            display = f"{local_name} vs {visit_name}" if visit_name else local_name
+            score = resultados.get(team_key, "--")
 
-        # Intento con crestUrl
-        crest = find_crest(local_name, crest_map)
-        if crest:
-            local_logo = crest
-        crest2 = find_crest(visit_name or '', crest_map)
-        if crest2:
-            visit_logo = crest2
-
-        score = resultados.get(key, '--')
-        cols = st.columns([0.5, 0.5, 8])
-        with cols[0]:
-            if local_logo:
-                # Si es URL, lo dejamos; si es ruta relativa, la resolvemos con BASE_DIR
-                if not local_logo.startswith(("http://", "https://")):
-                    logo_path = BASE_DIR / local_logo
-                    if logo_path.exists():
-                        st.image(str(logo_path), width=30)
-                else:
+            # Layout en dos columnas: escudos y texto/marcador
+            cols = st.columns([1, 6])
+            with cols[0]:
+                if local_logo and os.path.exists(local_logo):
                     st.image(local_logo, width=30)
-
-        with cols[1]:
-            if visit_logo:
-                # Misma lógica para el logo visitante
-                if not visit_logo.startswith(("http://", "https://")):
-                    logo_path = BASE_DIR / visit_logo
-                    if logo_path.exists():
-                        st.image(str(logo_path), width=30)
-                else:
+                if visit_logo and os.path.exists(visit_logo):
                     st.image(visit_logo, width=30)
-
-st.title('🟢 Participantes que siguen vivos')
-
-csv_path = 'data/supervivientes.csv'
-if os.path.exists(csv_path):
-    df = pd.read_csv(csv_path)
-    # Eliminar índice y resetear
-    if 'Unnamed: 0' in df.columns:
-        df = df.drop(columns=['Unnamed: 0'])
-    df = df.reset_index(drop=True)
-
-    if df.empty:
-        st.error('😢 Ningún participante acertó los tres resultados.')
+            with cols[1]:
+                st.markdown(
+                    f"**⚽ {display}** → "
+                    f"<span style='font-size:2em; color:green;'>{score}</span>",
+                    unsafe_allow_html=True
+                )
+            st.write("---")
     else:
-        st.success(f'🎉 ¡Quedan {len(df)} participantes en juego!')
-        st.dataframe(df, use_container_width=True)
-else:
-    st.info('Aún no se han publicado resultados.')
+        st.info("No hay partidos programados.")
+
+    # Sección de participantes vivos
+    if os.path.exists("data/supervivientes.csv"):
+        df = pd.read_csv("data/supervivientes.csv")
+        st.subheader("🟢 Participantes que siguen vivos")
+        if df.empty:
+            st.error("😢 Ningún participante acertó los tres partidos.")
+        else:
+            st.success(f"🎉 ¡Quedan {len(df)} participantes en juego!")
+            st.dataframe(df, use_container_width=True)
+    else:
+        st.info("Aún no se han publicado resultados.")
+
+except FileNotFoundError:
+    st.error("❌ data/resultados.json no encontrado.")
+except json.JSONDecodeError:
+    st.error("❌ El JSON de resultados está corrupto.")
+except Exception as e:
+    st.error(f"❌ Error al cargar datos: {e}")
