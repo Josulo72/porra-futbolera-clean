@@ -1,19 +1,18 @@
+import os
+import base64
+import json
+
 import streamlit as st
 import pandas as pd
-import json
-import os
 from streamlit.components.v1 import html as st_html
-from streamlit.runtime.scriptrunner import get_script_run_ctx
 
-# Configuración de la página
+# Configuración de página y estilo
 st.set_page_config(
     page_title="Porra Futbolera",
     page_icon="⚽",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
-
-# Ocultar menú, header y footer de Streamlit
 hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
@@ -23,6 +22,24 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+# Inyectamos Bootstrap una sola vez
+st.markdown("""
+<link
+  rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+/>
+""", unsafe_allow_html=True)
+
+# Función para convertir un logo local en data URI base64
+def img_to_data_uri(path: str) -> str:
+    if not os.path.exists(path):
+        return ""
+    with open(path, "rb") as f:
+        data = f.read()
+    b64 = base64.b64encode(data).decode("utf-8")
+    # detectamos extensión para la cabecera
+    ext = os.path.splitext(path)[1].lstrip(".").lower()
+    return f"data:image/{ext};base64,{b64}"
 # Diccionario completo de slugs a (nombre legible, ruta del logo)
 custom_teams = {
     # LaLiga
@@ -91,53 +108,46 @@ custom_teams.update({
     "Real Betis Balompié":        ("Real Betis Balompié",      "logos/betis.png"),
 })
 
-# Función auxiliar para convertir slug a nombre legible
+# Función auxiliar para nombre legible
 def slug_to_name(slug: str) -> str:
     if slug in custom_teams:
         return custom_teams[slug][0]
-    parts = slug.replace('-', ' ').split()
-    return ' '.join(part.capitalize() for part in parts)
+    parts = slug.replace("-", " ").split()
+    return " ".join(p.capitalize() for p in parts)
 
 # Carga de datos de resultados
 try:
     with open("data/resultados.json", "r", encoding="utf-8") as f:
         data = json.load(f)
-    partidos = data.get("partidos", {})
+    partidos   = data.get("partidos", {})
     resultados = data.get("resultados", {})
-except Exception as e:
-    st.error("❌ Error al leer 'data/resultados.json': revisa que exista y tenga formato válido.")
-    partidos = {}
-    resultados = {}
+    fechas     = data.get("fechas", {})
+except Exception:
+    st.error("❌ Error al leer 'data/resultados.json'. Revisa que exista y sea JSON válido.")
+    partidos, resultados, fechas = {}, {}, {}
 
-# Mostrar partidos con diseño responsivo Bootstrap
+# Renderizado de partidos
 if partidos:
     for key, enfrent in partidos.items():
-        # Extraer slugs
         try:
             local_slug, visitante_slug = enfrent.split(" vs ")
         except ValueError:
             continue
-        # Obtener nombres y logos
-        nombre_local = slug_to_name(local_slug)
-        nombre_visitante = slug_to_name(visitante_slug)
-        logo_local = custom_teams.get(local_slug, (None, ""))[1]
-        logo_visitante = custom_teams.get(visitante_slug, (None, ""))[1]
-        marcador = resultados.get(key, "-")
-        # Ejemplo de fecha; si la tienes en JSON, úsala en su lugar
-        fecha = data.get("fechas", {}).get(key, "")  
-        if not fecha:
-            fecha = ""  # O un valor por defecto
 
-        # HTML + Bootstrap
+        nombre_local, logo_local_path = custom_teams.get(local_slug, (slug_to_name(local_slug), ""))
+        nombre_visitante, logo_visitante_path = custom_teams.get(visitante_slug, (slug_to_name(visitante_slug), ""))
+
+        # Convertimos a data URIs
+        logo_local_uri     = img_to_data_uri(logo_local_path)
+        logo_visitante_uri = img_to_data_uri(logo_visitante_path)
+        marcador           = resultados.get(key, "-")
+        fecha              = fechas.get(key, "")
+
         partido_html = f"""
-        <link
-          rel="stylesheet"
-          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-        />
         <div class="container my-4 p-3 border rounded">
           <div class="row text-center align-items-center">
             <div class="col-4 col-md-3">
-              <img src="{logo_local}" class="img-fluid" style="max-height:80px;" alt="Logo Local">
+              <img src="{logo_local_uri}" class="img-fluid" style="max-height:80px;" alt="{nombre_local}">
               <div class="mt-2">{nombre_local}</div>
             </div>
             <div class="col-4 col-md-6">
@@ -146,7 +156,7 @@ if partidos:
               <div>FINALIZADO</div>
             </div>
             <div class="col-4 col-md-3">
-              <img src="{logo_visitante}" class="img-fluid" style="max-height:80px;" alt="Logo Visitante">
+              <img src="{logo_visitante_uri}" class="img-fluid" style="max-height:80px;" alt="{nombre_visitante}">
               <div class="mt-2">{nombre_visitante}</div>
             </div>
           </div>
@@ -156,7 +166,7 @@ if partidos:
 else:
     st.info("⚠️ No hay partidos programados.")
 
-# Sección de participantes "vivos"
+# Sección de participantes “vivos”
 csv_path = "data/supervivientes.csv"
 if os.path.exists(csv_path):
     df = pd.read_csv(csv_path)
