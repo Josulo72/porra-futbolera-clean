@@ -135,23 +135,33 @@ def subir_a_github():
     No intentará añadir archivos ignorados ni inexistentes.
     """
     try:
-        # Construir lista de archivos a añadir dinámicamente
+        # 1) Construir lista de archivos de datos válidos
         files_to_add = []
         if os.path.exists("data/resultados.json"):
             files_to_add.append("data/resultados.json")
         if os.path.exists("data/supervivientes.csv"):
             files_to_add.append("data/supervivientes.csv")
-        # Solo añadimos si hay archivos válidos
+
+        # 2) Si no hay nada, informamos y salimos
         if not files_to_add:
-            messagebox.showinfo("🚀 GitHub","No hay archivos nuevos para subir.")
+            messagebox.showinfo("🚀 GitHub", "No hay archivos nuevos para subir.")
             return
+
+        # 3) Hacemos git add
         subprocess.run(["git", "add"] + files_to_add, check=True)
+
+        # 4) Comprobamos si hay staged changes
+        diff = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
+        if diff.returncode == 0:
+            messagebox.showinfo("🚀 GitHub", "No hay cambios para commitear.")
+            return
+
+        # 5) Commit y push
         subprocess.run(["git", "commit", "-m", "Actualización automática desde GUI"], check=True)
         subprocess.run(["git", "push"], check=True)
         messagebox.showinfo("🚀 GitHub", "Archivos subidos correctamente.")
     except subprocess.CalledProcessError as e:
         messagebox.showerror("❌ Error en Git", str(e))
-
 
 def scraping_result(url):
     try:
