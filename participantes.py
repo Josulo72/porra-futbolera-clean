@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import requests
+import pathlib  
+            
+# Directorio base de la app (donde está este archivo)
+BASE_DIR = pathlib.Path(__file__).parent
 
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
