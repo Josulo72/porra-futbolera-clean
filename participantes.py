@@ -4,6 +4,10 @@ import json
 import os
 import requests
 from api_client.client import AUTH_TOKEN, API_URL, TIMEOUT
+import pathlib
+
+# Base dir de la app (donde está participantes.py)
+BASE_DIR = pathlib.Path(__file__).parent
 
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
@@ -119,16 +123,23 @@ if partidos:
         cols = st.columns([0.5, 0.5, 8])
         with cols[0]:
             if local_logo:
-                st.image(local_logo, width=30)
+                # Si es URL, lo dejamos; si es ruta relativa, la resolvemos con BASE_DIR
+                if not local_logo.startswith(("http://", "https://")):
+                    logo_path = BASE_DIR / local_logo
+                    if logo_path.exists():
+                        st.image(str(logo_path), width=30)
+                else:
+                    st.image(local_logo, width=30)
+
         with cols[1]:
             if visit_logo:
-                st.image(visit_logo, width=30)
-        with cols[2]:
-            disp = f"{local_name} vs {visit_name}" if visit_name else local_name
-            st.markdown(f"**⚽ {disp}** → <span style='font-size:2em; color:green;'>{score}</span>", unsafe_allow_html=True)
-        st.write('---')
-else:
-    st.info('No hay partidos programados.')
+                # Misma lógica para el logo visitante
+                if not visit_logo.startswith(("http://", "https://")):
+                    logo_path = BASE_DIR / visit_logo
+                    if logo_path.exists():
+                        st.image(str(logo_path), width=30)
+                else:
+                    st.image(visit_logo, width=30)
 
 st.title('🟢 Participantes que siguen vivos')
 
