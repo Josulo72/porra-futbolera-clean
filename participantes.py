@@ -2,19 +2,26 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+from streamlit.components.v1 import html as st_html
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 
 # Configuración de la página
-st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
-
-# Ocultar menú, footer y header de Streamlit
-st.markdown(
-    """
-    <style>
-        #MainMenu, footer, header {visibility: hidden;}
-    </style>
-    """,
-    unsafe_allow_html=True
+st.set_page_config(
+    page_title="Porra Futbolera",
+    page_icon="⚽",
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
+
+# Ocultar menú, header y footer de Streamlit
+hide_streamlit_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Diccionario completo de slugs a (nombre legible, ruta del logo)
 custom_teams = {
@@ -84,66 +91,79 @@ custom_teams.update({
     "Real Betis Balompié":        ("Real Betis Balompié",      "logos/betis.png"),
 })
 
-# Función para convertir un slug genérico en nombre legible
-
+# Función auxiliar para convertir slug a nombre legible
 def slug_to_name(slug: str) -> str:
-    return slug.replace('-', ' ').title()
+    if slug in custom_teams:
+        return custom_teams[slug][0]
+    parts = slug.replace('-', ' ').split()
+    return ' '.join(part.capitalize() for part in parts)
 
-# Carga de datos y renderizado de la app
+# Carga de datos de resultados
 try:
     with open("data/resultados.json", "r", encoding="utf-8") as f:
-        datos = json.load(f)
-    partidos = datos.get("partidos", {})      # Dict: clave -> "slug1 vs slug2"
-    resultados = datos.get("resultados", {})  # Dict: clave -> marcador
-
-    st.subheader("📋 Partidos de la jornada")
-    if partidos:
-        for team_key, partido_str in partidos.items():
-            # Extraer slugs del string
-            if "vs" in partido_str:
-                local_slug, visit_slug = [s.strip() for s in partido_str.split("vs")]
-                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
-                visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
-            else:
-                local_slug = partido_str.strip()
-                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
-                visit_name = visit_logo = None
-
-            display = f"{local_name} vs {visit_name}" if visit_name else local_name
-            score = resultados.get(team_key, "--")
-
-            # Layout en dos columnas: escudos y texto/marcador
-            cols = st.columns([1, 6])
-            with cols[0]:
-                if local_logo and os.path.exists(local_logo):
-                    st.image(local_logo, width=30)
-                if visit_logo and os.path.exists(visit_logo):
-                    st.image(visit_logo, width=30)
-            with cols[1]:
-                st.markdown(
-                    f"**⚽ {display}** → "
-                    f"<span style='font-size:2em; color:green;'>{score}</span>",
-                    unsafe_allow_html=True
-                )
-            st.write("---")
-    else:
-        st.info("No hay partidos programados.")
-
-    # Sección de participantes vivos
-    if os.path.exists("data/supervivientes.csv"):
-        df = pd.read_csv("data/supervivientes.csv")
-        st.subheader("🟢 Participantes que siguen vivos")
-        if df.empty:
-            st.error("😢 Ningún participante acertó los tres partidos.")
-        else:
-            st.success(f"🎉 ¡Quedan {len(df)} participantes en juego!")
-            st.dataframe(df, use_container_width=True)
-    else:
-        st.info("Aún no se han publicado resultados.")
-
-except FileNotFoundError:
-    st.error("❌ data/resultados.json no encontrado.")
-except json.JSONDecodeError:
-    st.error("❌ El JSON de resultados está corrupto.")
+        data = json.load(f)
+    partidos = data.get("partidos", {})
+    resultados = data.get("resultados", {})
 except Exception as e:
-    st.error(f"❌ Error al cargar datos: {e}")
+    st.error("❌ Error al leer 'data/resultados.json': revisa que exista y tenga formato válido.")
+    partidos = {}
+    resultados = {}
+
+# Mostrar partidos con diseño responsivo Bootstrap
+if partidos:
+    for key, enfrent in partidos.items():
+        # Extraer slugs
+        try:
+            local_slug, visitante_slug = enfrent.split(" vs ")
+        except ValueError:
+            continue
+        # Obtener nombres y logos
+        nombre_local = slug_to_name(local_slug)
+        nombre_visitante = slug_to_name(visitante_slug)
+        logo_local = custom_teams.get(local_slug, (None, ""))[1]
+        logo_visitante = custom_teams.get(visitante_slug, (None, ""))[1]
+        marcador = resultados.get(key, "-")
+        # Ejemplo de fecha; si la tienes en JSON, úsala en su lugar
+        fecha = data.get("fechas", {}).get(key, "")  
+        if not fecha:
+            fecha = ""  # O un valor por defecto
+
+        # HTML + Bootstrap
+        partido_html = f"""
+        <link
+          rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        />
+        <div class="container my-4 p-3 border rounded">
+          <div class="row text-center align-items-center">
+            <div class="col-4 col-md-3">
+              <img src="{logo_local}" class="img-fluid" style="max-height:80px;" alt="Logo Local">
+              <div class="mt-2">{nombre_local}</div>
+            </div>
+            <div class="col-4 col-md-6">
+              <div class="h1">{marcador}</div>
+              <small class="text-muted">{fecha}</small>
+              <div>FINALIZADO</div>
+            </div>
+            <div class="col-4 col-md-3">
+              <img src="{logo_visitante}" class="img-fluid" style="max-height:80px;" alt="Logo Visitante">
+              <div class="mt-2">{nombre_visitante}</div>
+            </div>
+          </div>
+        </div>
+        """
+        st_html(partido_html, height=200)
+else:
+    st.info("⚠️ No hay partidos programados.")
+
+# Sección de participantes "vivos"
+csv_path = "data/supervivientes.csv"
+if os.path.exists(csv_path):
+    df = pd.read_csv(csv_path)
+    if df.empty:
+        st.error("😢 Ningún participante acertó en esta jornada.")
+    else:
+        st.write(f"🎉 {len(df)} participantes siguen vivos:")
+        st.dataframe(df)
+else:
+    st.info("ℹ️ Aún no se han publicado los resultados de supervivientes.")
