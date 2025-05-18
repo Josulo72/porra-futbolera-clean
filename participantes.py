@@ -97,6 +97,7 @@ try:
     resultados = datos.get("resultados", {})  # Dict: clave -> marcador
 
     st.subheader("📋 Partidos de la jornada")
+    # Renderizado de partidos con nuevo layout tipo tarjeta
     if partidos:
         for team_key, partido_str in partidos.items():
             # Extraer slugs del string
@@ -112,25 +113,46 @@ try:
             display = f"{local_name} vs {visit_name}" if visit_name else local_name
             score = resultados.get(team_key, "--")
 
-            # Layout en dos columnas: escudos y texto/marcador
-            cols = st.columns([1, 6])
+            # 3) Lógica de resultados
+            score_logic = resultados.get(team_key, '--')  # "1", "X", "2"
+            # Mapea a un resultado visual; aquí deberías adaptar a tus valores reales si cambian:
+            score_map = {
+                '1': '2-1',
+                'X': '1-1',
+                '2': '0-3'
+            }
+            score_vis = score_map.get(score_logic, '--')
+            date_str = "17.05.2025 19:00"  # si tienes fecha en tu JSON, sustitúyela aquí
+
+            # 4) Layout con 3 columnas: logo-local · info · logo-visitante
+            cols = st.columns([2, 4, 2])
+        # Columna Izquierda: logo local
             with cols[0]:
-                if local_logo and os.path.exists(local_logo):
-                    st.image(local_logo, width=30)
-                if visit_logo and os.path.exists(visit_logo):
-                    st.image(visit_logo, width=30)
+                 if local_logo:
+                     path_a = local_slug / local_logo
+                     if path_a.exists():
+                         st.image(str(path_a), width=60)
+                 st.caption(local_name)
+            # Columna Central: fecha, marcador y estado
             with cols[1]:
-                st.markdown(
-                    f"**⚽ {display}** → "
-                    f"<span style='font-size:2em; color:green;'>{score}</span>",
-                    unsafe_allow_html=True
-                )
-            st.write("---")
+                st.markdown(f"<small>{date_str}</small>", unsafe_allow_html=True)
+                st.markdown(f"# {score_vis}", unsafe_allow_html=True)
+                st.markdown("**FINALIZADO**", unsafe_allow_html=True)
+
+        # Columna Derecha: logo visitante
+            with cols[2]:
+                 if visit_logo:
+                     path_b = visit_slug / visit_logo
+                     if path_b.exists():
+                         st.image(str(path_b), width=60)
+                 st.caption(visit_name)
+            # Separador antes del siguiente partido
+            st.markdown("---")
     else:
         st.info("No hay partidos programados.")
 
     # Sección de participantes vivos
-    if os.path.exists("data/supervivientes.csv"):
+    if os.path.exists("data/supervivientes.csv"): 
         df = pd.read_csv("data/supervivientes.csv")
         st.subheader("🟢 Participantes que siguen vivos")
         if df.empty:
