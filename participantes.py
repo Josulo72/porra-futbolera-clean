@@ -7,15 +7,18 @@ from api_client.client import AUTH_TOKEN, API_URL, TIMEOUT
 
 # Configuración de la página
 st.set_page_config(page_title="Porra Futbolera", page_icon="⚽", layout="centered")
+
 # Hacer la tabla desplazable horizontalmente en móviles
-st.markdown("""
-<style>
-  div[data-testid="stDataFrame"] {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+      div[data-testid="stDataFrame"] {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    </style>
+    """, unsafe_allow_html=True
+)
 
 # Ocultar menú, footer y header de Streamlit
 st.markdown(
@@ -27,7 +30,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Diccionario completo de slugs a (nombre legible, ruta del logo)
+# Diccionario de slugs a (nombre, logo local)
 custom_teams = {
     # LaLiga
     "rayo-vallecano":                ("Rayo",             "logos/rayo.png"),
@@ -38,7 +41,7 @@ custom_teams = {
     "club-atletico-osasuna":         ("Osasuna",          "logos/osasuna.png"),
     "union-deportiva-las-palmas":    ("Las Palmas",       "logos/las_palmas.png"),
     "valencia-club-de-futbol":       ("Valencia",         "logos/valencia.png"),
-    "real-valladolid-club-de-futbol": ("Real Valladolid", "logos/real_valladolid.png"),
+    "real-valladolid-club-de-futbol": ("Real Valladolid","logos/real_valladolid.png"),
     "futbol-club-barcelona":         ("Barcelona",        "logos/barcelona.png"),
     "real-madrid-club-de-futbol":    ("Real Madrid CF",   "logos/real_madrid.png"),
     "real-club-celta-de-vigo":       ("Celta",            "logos/celta.png"),
@@ -53,14 +56,13 @@ custom_teams = {
     # Primera RFEF
     "sociedad-deportiva-ponferradina": ("Ponferradina",   "logos/ponferradina.png"),
     "cultural-y-deportiva-leonesa":    ("Cultural Leonesa","logos/cultural.png"),
-    # ... añade más si hace falta
 }
 
-
+# Función para convertir slug a nombre legible
 def slug_to_name(slug: str) -> str:
     return slug.replace('-', ' ').title()
 
-# Mapeo de logos de la API para LaLiga
+# Intentar cargar logos vía API de Football-Data
 try:
     teams_url = API_URL.rsplit("/", 1)[0] + "/teams"
     resp = requests.get(teams_url, headers={"X-Auth-Token": AUTH_TOKEN}, timeout=TIMEOUT)
@@ -70,65 +72,65 @@ try:
 except:
     crest_map = {}
 
-# Carga de datos y renderizado de la app
-try:
-    with open("data/resultados.json", "r", encoding="utf-8") as f:
-        datos = json.load(f)
-    partidos = datos.get("partidos", {})      # Dict: clave -> "slug1 vs slug2"
-    resultados = datos.get("resultados", {})  # Dict: clave -> marcador
-
+# Carga de datos y renderizado
+def main():
     st.subheader("📋 Partidos de la jornada")
+    try:
+        with open("data/resultados.json", "r", encoding="utf-8") as f:
+            datos = json.load(f)
+    except FileNotFoundError:
+        st.error("❌ data/resultados.json no encontrado.")
+        return
+    except json.JSONDecodeError:
+        st.error("❌ El JSON de resultados está corrupto.")
+        return
+
+    partidos = datos.get("partidos", {})
+    resultados = datos.get("resultados", {})
+
     if partidos:
-        for team_key, partido_str in partidos.items():
+        for key, partido_str in partidos.items():
             if "vs" in partido_str:
                 local_slug, visit_slug = [s.strip() for s in partido_str.split("vs")]
-                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
-                visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
             else:
-                local_slug = partido_str.strip()
-                local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
-                visit_name = visit_logo = None
+                local_slug, visit_slug = partido_str.strip(), None
 
-            # Usar crestUrl de API si está disponible
+            local_name, local_logo = custom_teams.get(local_slug, (slug_to_name(local_slug), None))
+            visit_name, visit_logo = (None, None)
+            if visit_slug:
+                visit_name, visit_logo = custom_teams.get(visit_slug, (slug_to_name(visit_slug), None))
+
+            # Sustituir por crestUrl si coincide el nombre exacto
             if local_name in crest_map:
                 local_logo = crest_map[local_name]
             if visit_name in crest_map:
                 visit_logo = crest_map[visit_name]
 
-            display = f"{local_name} vs {visit_name}" if visit_name else local_name
-            score = resultados.get(team_key, "--")
-
+            score = resultados.get(key, "--")
             cols = st.columns([1, 6])
             with cols[0]:
                 if local_logo:
-                    if isinstance(local_logo, str) and local_logo.startswith("http"):
-                        st.image(local_logo, width=30)
-                    elif os.path.exists(local_logo):
-                        st.image(local_logo, width=30)
+                    st.image(local_logo, width=30)
                 if visit_logo:
-                    if isinstance(visit_logo, str) and visit_logo.startswith("http"):
-                        st.image(visit_logo, width=30)
-                    elif os.path.exists(visit_logo):
-                        st.image(visit_logo, width=30)
+                    st.image(visit_logo, width=30)
             with cols[1]:
-                st.markdown(
-                    f"**⚽ {display}** → "
-                    f"<span style='font-size:2em; color:green;'>{score}</span>",
-                    unsafe_allow_html=True
-                )
+                display = f"{local_name} vs {visit_name}" if visit_name else local_name
+                st.markdown(f"**⚽ {display}** → <span style='font-size:2em; color:green;'>{score}</span>", unsafe_allow_html=True)
             st.write("---")
     else:
         st.info("No hay partidos programados.")
 
-    # Sección de participantes vivos
-    if os.path.exists("data/supervivientes.csv"):
-        df = pd.read_csv("data/supervivientes.csv")
-        st.subheader("🟢 Participantes que siguen vivos")
-        # Elimina la columna de índice que Streamlit mete por defecto
+    # Sección participantes
+    csv_path = "data/supervivientes.csv"
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        # Eliminar columna índice de Streamlit
         if 'Unnamed: 0' in df.columns:
             df = df.drop(columns=['Unnamed: 0'])
-        # Reinicia el índice para no mostrar números a la izquierda
+        # Resetear índice para que no muestre numeración
         df = df.reset_index(drop=True)
+
+        st.subheader("🟢 Participantes que siguen vivos")
         if df.empty:
             st.error("😢 Ningún participante acertó los tres partidos.")
         else:
@@ -137,9 +139,5 @@ try:
     else:
         st.info("Aún no se han publicado resultados.")
 
-except FileNotFoundError:
-    st.error("❌ data/resultados.json no encontrado.")
-except json.JSONDecodeError:
-    st.error("❌ El JSON de resultados está corrupto.")
-except Exception as e:
-    st.error(f"❌ Error al cargar datos: {e}")
+if __name__ == '__main__':
+    main()
