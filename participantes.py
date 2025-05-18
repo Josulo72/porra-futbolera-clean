@@ -129,7 +129,7 @@ try:
         # Columna Izquierda: logo local
             with cols[0]:
                  if local_logo:
-                     path_a = local_slug / local_logo
+                     path_a = BASE_DIR / local_logo
                      if path_a.exists():
                          st.image(str(path_a), width=60)
                  st.caption(local_name)
@@ -142,7 +142,7 @@ try:
         # Columna Derecha: logo visitante
             with cols[2]:
                  if visit_logo:
-                     path_b = visit_slug / visit_logo
+                     path_b = BASE_DIR / visit_logo
                      if path_b.exists():
                          st.image(str(path_b), width=60)
                  st.caption(visit_name)
