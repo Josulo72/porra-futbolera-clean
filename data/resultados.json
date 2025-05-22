@@ -1,26 +1,29 @@
 {
     "partidos": {
-        "Real Madrid": "Sevilla FC vs Real Madrid CF",
-        "Barcelona": "FC Barcelona vs Villarreal CF",
-        "Ponferradina": "sociedad-deportiva-ponferradina vs cultural-y-deportiva-leonesa"
+        "Real Madrid": "Real Madrid CF vs Real Sociedad de F\u00fatbol",
+        "Barcelona": "Athletic Club vs FC Barcelona",
+        "Ponferradina": "sestao-river-club vs sociedad-deportiva-ponferradina"
     },
     "horarios": {
         "Real Madrid": {
-            "fecha": "2025-05-18",
-            "hora": "21:00"
+            "fecha": "2025-05-24",
+            "hora": "18:15"
         },
         "Barcelona": {
-            "fecha": "2025-05-18",
-            "hora": "21:00"
+            "fecha": "2025-05-25",
+            "hora": "23:00"
         },
         "Ponferradina": {
-            "fecha": "2025-05-17",
+            "fecha": "2025-05-24",
             "hora": "21:00"
         }
     },
     "resultados": {
-        "Real Madrid": "0-2",
-        "Barcelona": "2-3",
-        "Ponferradina": "1"
+        "Real Madrid": "",
+        "Barcelona": "",
+        "Ponferradina": ""
+    },
+    "overrides": {
+        "Ponferradina": "https://es.soccerway.com/matches/2025/05/24/spain/segunda-b/sestao-river-club/sociedad-deportiva-ponferradina/4453977/"
     }
 }
