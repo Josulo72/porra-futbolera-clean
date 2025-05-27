@@ -1,7 +1,7 @@
 {
     "partidos": {
         "Real Madrid": "Real Madrid CF vs Real Sociedad de F\u00fatbol",
-        "Barcelona": "Athletic Club vs FC Barcelona",
+        "Barcelona": "Athletic Club vs RCD Espanyol de Barcelona",
         "Ponferradina": "sestao-river-club vs sociedad-deportiva-ponferradina"
     },
     "horarios": {
@@ -19,9 +19,9 @@
         }
     },
     "resultados": {
-        "Real Madrid": "",
-        "Barcelona": "",
-        "Ponferradina": ""
+        "Real Madrid": "2-0",
+        "Barcelona": "0-3",
+        "Ponferradina": "0-2"
     },
     "overrides": {
         "Ponferradina": "https://es.soccerway.com/matches/2025/05/24/spain/segunda-b/sestao-river-club/sociedad-deportiva-ponferradina/4453977/"
